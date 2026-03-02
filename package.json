@@ -1,0 +1,23 @@
+{
+  "name": "fpskub",
+  "version": "1.0.0",
+  "description": "backend du fps en kubernetes",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frugierguillaume87-lang/FPSKubernetes.git"
+  },
+  "author": "guillaume frugier",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/frugierguillaume87-lang/FPSKubernetes/issues"
+  },
+  "homepage": "https://github.com/frugierguillaume87-lang/FPSKubernetes#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.19.0"
+  }
+}
