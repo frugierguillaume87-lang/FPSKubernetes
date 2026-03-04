@@ -14,6 +14,17 @@ const pool = new Pool({
 server.get('/', async (req, res)=>{
     const client = await pool.connect();
     let resultat = await client.query('select * from joueur');
-    res.send(resultat);
+    await console.log(resultat.rows)
+    res.send(resultat.rows);
 });
-server.listen(9090)
+server.post("/register", async (req, res)=>{
+    const client = await pool.connect();
+
+    await client.end();
+});
+server.post("/login", async (req, res)=>{
+    const client = await pool.connect();
+
+    await client.end();
+});
+server.listen(3000);
