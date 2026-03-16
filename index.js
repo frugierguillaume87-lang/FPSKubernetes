@@ -1,5 +1,6 @@
 const express = require("express");
 const {Pool} = require("pg");
+const {dbReq} = require("./dbConnect")
 
 server = express();
 

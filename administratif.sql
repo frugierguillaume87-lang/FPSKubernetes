@@ -1,0 +1,6 @@
+CREATE USER usr WITH 'usr';
+CREATE SCHEMA fps_kub;
+GRANT ALL ON SCHEMA fps_kub TO usr;
+GRANT ALL ON TABLE users TO usr;
+GRANT ALL ON TABLE scores TO usr;
+GRANT ALL ON TABLE saves TO usr;
