@@ -2,17 +2,17 @@ const db = require("pg")
 
 
 
- async function selectIntoDb(request){
-    const client = await pool.connect();
+ async function selectIntoDb(request, client){
+
     let resultat = await client.query(request);
     await client.end();
     return resultat.rows
 }
 
 
- async function insertIntoDb(request){
-    const client = await pool.connect();
-    await client.query(request);
+ async function insertIntoDb(request, client, parameters){
+    
+    await client.query(request, parameters);
     await client.end();
 
 }

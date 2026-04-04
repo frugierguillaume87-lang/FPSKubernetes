@@ -1,6 +1,6 @@
 const express = require("express");
 const {Pool} = require("pg");
-const {dbReq} = require("./dbConnect")
+const {selectIntoDb, insertIntoDb} = require("./dbConnect")
 
 server = express();
 
@@ -14,13 +14,14 @@ const pool = new Pool({
 
 server.get('/', async (req, res)=>{
     const client = await pool.connect();
-    let resultat = await client.query('select * from joueur');
+    let resultat = await client.query('select * from users', client);
     await console.log(resultat.rows)
     res.send(resultat.rows);
 });
 server.post("/register", async (req, res)=>{
     const client = await pool.connect();
-
+    const date = new Date();
+    await insertIntoDb("INSERT INTO users(email, password, created_at) VALUES ($1, $2, $3)",client,["test","test", new Date()])
     await client.end();
 });
 server.post("/login", async (req, res)=>{
@@ -28,4 +29,4 @@ server.post("/login", async (req, res)=>{
 
     await client.end();
 });
-server.listen(3000);
+server.listen(9090);
