@@ -1,3 +1,4 @@
+const { text } = require("express");
 const db = require("pg")
 
 
@@ -17,9 +18,14 @@ const db = require("pg")
     @param parameters pour les paramètres d'insertion ou de mise à jour
 
 */
- async function insertIntoDb(request, client, parameters){
-    
-    await client.query(request, parameters);
+ async function insertIntoDb(requestString, client, parameters){
+    const request = {
+        name:"insertion",
+        text:requestString,
+        values: parameters,
+    }
+
+    await client.query(request);
     await client.release();
 
 }
