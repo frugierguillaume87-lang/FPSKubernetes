@@ -3,7 +3,7 @@ DROP IF EXISTS users;
 CREATE TABLE users(
     id SERIAL PRIMARY KEY NOT NULL,
     email VARCHAR(50) NOT NULL,
-    password VARCHAR(50) NOT NULL,
+    password TEXT NOT NULL,
     created_at DATE NOT NULL
 );
 
