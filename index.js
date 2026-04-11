@@ -2,6 +2,7 @@ const express = require("express");
 const { Pool } = require("pg");
 const { selectIntoDb, insertIntoDb } = require("./dbConnect");
 const {hachageMdp, comparePassword} = require("./passwordhash")
+const bcrypt = require("bcrypt")
 
 server = express();
 server.use(express.json());
@@ -48,7 +49,7 @@ server.post("/login", async (req, res) => {
     let {email, password} = data
     let resultat = await selectIntoDb("SELECT * FROM users WHERE email=$1",[email], client)
     let hash = resultat[0].password
-    if (comparePassword(hash, password)){
+    if (bcrypt.compareSync(password, hash)){
         res.status(201)
         await client.release();
         res.send("OK")
