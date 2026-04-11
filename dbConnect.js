@@ -8,7 +8,6 @@ const db = require("pg")
     let resultat;
     if (parameters[0] != null){
         query = {
-            name:"rechercher",
             text:request,
             values: parameters
         }
@@ -32,7 +31,6 @@ const db = require("pg")
 */
  async function insertIntoDb(requestString, client, parameters){
     const request = {
-        name:"insertion",
         text:requestString,
         values: parameters,
     }

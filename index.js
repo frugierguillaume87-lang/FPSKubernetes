@@ -46,13 +46,16 @@ server.post("/register", async (req, res) => {
 server.post("/login", async (req, res) => {
     const client = await pool.connect();
     let data = req.body
+    let resultat;
     let {email, password} = data
-    let resultat = await selectIntoDb("SELECT * FROM users WHERE email=$1",[email], client)
-    let hash = resultat[0].password
+    let utilisateur = await selectIntoDb("SELECT * FROM users WHERE email=$1",[email], client)
+    let hash = utilisateur[0].password
     if (bcrypt.compareSync(password, hash)){
-        res.status(201)
-        await client.release();
-        res.send("OK")
+      resultat = await selectIntoDb("SELECT json_data FROM saves WHERE user_id=$1",[utilisateur[0].id], client)  
+      res.status(201)
+      console.log(resultat)
+      await client.release();
+      res.send(resultat.json_data)
     }else{
         res.status(403)
         await client.release();
