@@ -1,4 +1,5 @@
 const express = require("express");
+require("dotenv").config();
 const { Pool } = require("pg");
 const { selectIntoDb, insertIntoDb } = require("./dbConnect");
 const {hachageMdp, comparePassword} = require("./passwordhash")
@@ -7,11 +8,11 @@ const bcrypt = require("bcrypt")
 server = express();
 server.use(express.json());
 const pool = new Pool({
-  host: "localhost",
-  user: "usr",
-  password: "usr",
-  database: "fps",
-  port: 5432,
+  host: process.env.HOST,
+  user: process.env.USER,
+  password: process.env.PASSWORD,
+  database: process.env.DB,
+  port: process.env.PORT,
 });
 
 server.get("/", async (req, res) => {
@@ -50,12 +51,16 @@ server.post("/login", async (req, res) => {
     let {email, password} = data
     let utilisateur = await selectIntoDb("SELECT * FROM users WHERE email=$1",[email], client)
     let hash = utilisateur[0].password
-    if (bcrypt.compareSync(password, hash)){
+    if (bcrypt.compareSync(password, hash) ){
       resultat = await selectIntoDb("SELECT json_data FROM saves WHERE user_id=$1",[utilisateur[0].id], client)  
       res.status(201)
       console.log(resultat)
       await client.release();
-      res.send(resultat.json_data)
+      if(resultat.length == 1){
+        res.send(resultat[0].json_data)
+      }else{
+        res.send(resultat.json_data)
+      }
     }else{
         res.status(403)
         await client.release();
