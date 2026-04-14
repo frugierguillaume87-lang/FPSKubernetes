@@ -7,12 +7,13 @@ const bcrypt = require("bcrypt")
 
 server = express();
 server.use(express.json());
+
 const pool = new Pool({
   host: process.env.HOST,
-  user: process.env.USER,
+  user: process.env.USER_DB,
   password: process.env.PASSWORD,
   database: process.env.DB,
-  port: process.env.PORT,
+  port: process.env.DB_PORT,
 });
 
 server.get("/", async (req, res) => {
@@ -52,22 +53,31 @@ server.post("/login", async (req, res) => {
     let utilisateur = await selectIntoDb("SELECT * FROM users WHERE email=$1",[email], client)
     let hash = utilisateur[0].password
     if (bcrypt.compareSync(password, hash) ){
-      resultat = await selectIntoDb("SELECT json_data FROM saves WHERE user_id=$1",[utilisateur[0].id], client)  
+      resultat = await selectIntoDb("SELECT token FROM token_users WHERE user_id=$1",[utilisateur[0].id], client)  
       res.status(201)
       console.log(resultat)
       await client.release();
-      if(resultat.length == 1){
-        res.send(resultat[0].json_data)
-      }else{
-        res.send(resultat.json_data)
-      }
+      res.send(resultat[0].token)
+
     }else{
         res.status(403)
         await client.release();
         res.send("erreur mauvais mot de passe")
     }
-
-    
-    
 });
+
+server.post("/score",async (req, res)=>{
+    const client = await pool.connect();
+    let data = req.body
+    let resultat;
+    let {token, score, wave} = data
+    try {
+      resultat = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.token = $1",[token], client)
+      console.log(resultat[0].id)
+      await insertIntoDb("insert into scores(user_id,score,wave_reached,created_at) values ($1, $2, $3, $4)",[resultat[0].id, score, wave, new Date()], client) 
+      res.send("score sauvegardé")     
+    } catch (error) {
+      res.send(error)
+    }
+})
 server.listen(9090);

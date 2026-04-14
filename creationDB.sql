@@ -24,3 +24,12 @@ CREATE TABLE saves(
     json_data TEXT NOT NULL,
     Foreign Key (user_id) REFERENCES users(id)
 );
+
+DROP IF EXISTS token_users;
+CREATE TABLE token_users(
+    id SERIAL PRIMARY KEY,
+    token TEXT NOT NULL,
+    expired bool NOT NULL,
+    user_id int UNIQUE NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
