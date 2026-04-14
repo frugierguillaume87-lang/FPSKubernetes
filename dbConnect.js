@@ -36,7 +36,7 @@ const db = require("pg")
     }
 
     await client.query(request);
-    await client.release();
+
 
 }
 
