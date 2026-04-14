@@ -28,7 +28,7 @@ CREATE TABLE saves(
 DROP IF EXISTS token_users;
 CREATE TABLE token_users(
     id SERIAL PRIMARY KEY,
-    token TEXT NOT NULL,
+    user_token TEXT NOT NULL,
     expired bool NOT NULL,
     user_id int UNIQUE NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)

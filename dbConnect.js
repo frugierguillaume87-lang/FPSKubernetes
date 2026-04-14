@@ -3,7 +3,7 @@ const db = require("pg")
 
 
 
- async function selectIntoDb(request,parameters, client){
+ async function selectIntoDb(request,client,parameters ){
     let query = {}
     let resultat;
     if (parameters[0] != null){
@@ -36,7 +36,7 @@ const db = require("pg")
     }
 
     await client.query(request);
-
+    
 
 }
 
