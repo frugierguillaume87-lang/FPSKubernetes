@@ -11,7 +11,7 @@ async function hachageMdp(mdp){
 }
 
 function creationToken(){
-    const tableau = new Uint32Array(100);
+    const tableau = new Uint32Array(10);
     crypto.getRandomValues(tableau)
     return Array.from(tableau, b =>
         b.toString(16).padStart(2, "0")
