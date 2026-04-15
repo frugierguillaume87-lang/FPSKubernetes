@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt")
+const crypto = require("crypto")
 const saltround = 10
 
 
@@ -9,8 +10,12 @@ async function hachageMdp(mdp){
     return hash
 }
 
-async function comparePassword(hash, mdp) {
-    return bcrypt.compareSync(mdp, hash)
+function creationToken(){
+    const tableau = new Uint32Array(100);
+    crypto.getRandomValues(tableau)
+    return Array.from(tableau, b =>
+        b.toString(16).padStart(2, "0")
+    ).join("");
 }
 
-module.exports = {hachageMdp, comparePassword}
+module.exports = {hachageMdp,  creationToken}

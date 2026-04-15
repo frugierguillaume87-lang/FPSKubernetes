@@ -2,7 +2,7 @@ const express = require("express");
 require("dotenv").config();
 const { Pool } = require("pg");
 const { selectIntoDb, insertIntoDb } = require("./dbConnect");
-const {hachageMdp, comparePassword} = require("./passwordhash")
+const {hachageMdp, creationToken} = require("./passwordhash")
 const bcrypt = require("bcrypt")
 
 server = express();
@@ -17,12 +17,8 @@ const pool = new Pool({
 });
 
 server.get("/", async (req, res) => {
-  const client = await pool.connect();
-  
-  let resultat = await selectIntoDb("select * from users as usr", client,[]);
-  console.log(resultat);
-  await client.release();
-  res.send(resultat);
+
+  res.send("RAS ici");
 });
 
 
@@ -54,9 +50,11 @@ server.post("/login", async (req, res) => {
     let utilisateur = await selectIntoDb("SELECT * FROM users WHERE email=$1", client, [email])
     let hash = utilisateur[0].password
     if (bcrypt.compareSync(password, hash) ){
-      resultat = await selectIntoDb("SELECT token FROM token_users WHERE user_id=$1", client, [utilisateur[0].id])  
+      let token = creationToken()
+      await insertIntoDb("insert into token_users(user_token, expired, user_id) values ($1,$2,$3)", client, [token, false, utilisateur[0].id]);
+      resultat = await selectIntoDb("SELECT user_token FROM token_users WHERE user_id=$1", client, [utilisateur[0].id])  
       res.status(201)
-      console.log(resultat)
+
       await client.release();
       res.send(resultat[0].token)
 
@@ -75,11 +73,39 @@ server.post("/score",async (req, res)=>{
     let {token, score, wave} = data
     console.log(token+" "+score+" "+wave)
     try {
-      resultat = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.user_token = $1", client, [token])
-      console.log(resultat[0].id)
-      await insertIntoDb("insert into scores(user_id,score,wave_reached,created_at) values ($1, $2, $3, $4)", client,[resultat[0].id, score, wave, new Date()]) 
-  
+      let expiration = await selectIntoDb("select expired from token_users where user_token=$1", client, [token])
+      if(!expiration){
+        resultat = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.user_token = $1", client, [token])
+        await insertIntoDb("insert into scores(user_id,score,wave_reached,created_at) values ($1, $2, $3, $4)", client,[resultat[0].id, score, wave, new Date()]) 
+          
+      }else{
+        res.send("error expired token")
+      }
       res.send("score sauvegardé")     
+    } catch (error) {
+     
+      console.log(error)
+    }
+
+})
+server.post("/score/fetch",async (req, res)=>{
+    const client = await pool.connect();
+    let data = req.body
+
+    let resultat;
+    let {token, score, wave} = data
+    console.log(token+" "+score+" "+wave)
+    try {
+      let expiration = await selectIntoDb("select expired from token_users where user_token=$1", client, [token])
+      if(!expiration){
+        let u_id = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.user_token = $1", client, [token])
+        resultat = await selectIntoDb("select * from scores where user_id=$1", client,[u_id[0].id]) 
+        await client.release()
+        res.send(resultat)
+      }else{
+        res.send("error expired token")
+      }
+ 
     } catch (error) {
      
       console.log(error)
@@ -91,9 +117,13 @@ server.post("/save", async (req, res)=>{
   const client = await pool.connect();
   let data = req.body
   let {token, json} = data
-  let resultat = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.user_token = $1", client, [token])
-
-  await insertIntoDb("insert into saves (user_id, json_data) values($1,$2)", client, [resultat[0].id, json]);
+  let expiration = await selectIntoDb("select expired from token_users where user_token=$1", client, [token])
+  if(!expiration){
+    let resultat = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.user_token = $1", client, [token])
+    await insertIntoDb("insert into saves (user_id, json_data) values($1,$2)", client, [resultat[0].id, json]);
+  }else{
+    res.send("error expired token")
+  }
   await client.release();
   res.send("OK")
 })
@@ -102,19 +132,26 @@ server.post("/save/fetch", async (req, res)=>{
   const client = await pool.connect();
   let data = req.body
   let {token} = data
-  let token_result = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.user_token = $1", client,[token])
-  let resultat = await selectIntoDb("select json_data from saves s join users u on s.user_id = u.id  where s.user_id = $1",
+  let expiration = await selectIntoDb("select expired from token_users where user_token=$1", client, [token])
+  if(!expiration){
+     let token_result = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.user_token = $1", client,[token])
+    let resultat = await selectIntoDb("select json_data from saves s join users u on s.user_id = u.id  where s.user_id = $1",
      client,
      [token_result[0].id]);
-  console.log(resultat)
+  }else{
+    res.send("error expired token")
+  }
+
   await client.release();
   res.send(resultat)
 })
 
-server.post("/endtoken", async (req, res)=>{
+server.get("/endtoken/:token", async (req, res)=>{
   const client = await pool.connect();
-  let data = req.body
-
+  let token = req.params.token
+  let token_result = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.user_token = $1", client,[token])
+  await insertIntoDb("update token_users set expired=true where user_id = $1", client,[token_result[0].id])
   await client.release();
+  res.send("token supprimé")
 })
 server.listen(9090);
