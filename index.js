@@ -73,7 +73,7 @@ server.post("/score",async (req, res)=>{
     let {token, score, wave} = data
     console.log(token+" "+score+" "+wave)
     try {
-      let expiration = await selectIntoDb("select expired from token_users where user_token=$1 and expired <> true", client, [token])
+
       resultat = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.user_token = $1 and tk.expired <> true", client, [token])
       await insertIntoDb("insert into scores(user_id,score,wave_reached,created_at) values ($1, $2, $3, $4)", client,[resultat[0].id, score, wave, new Date()]) 
           
@@ -92,7 +92,7 @@ server.post("/score/fetch",async (req, res)=>{
     let {token, score, wave} = data
     console.log(token+" "+score+" "+wave)
     try {
-      let expiration = await selectIntoDb("select expired from token_users where user_token=$1 and expired <> true", client, [token])
+
       let u_id = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.user_token = $1 and tk.expired <> true", client, [token])
         resultat = await selectIntoDb("select * from scores where user_id=$1", client,[u_id[0].id]) 
         await client.release()
@@ -109,7 +109,7 @@ server.post("/save", async (req, res)=>{
   const client = await pool.connect();
   let data = req.body
   let {token, json} = data
-  let expiration = await selectIntoDb("select expired from token_users where user_token=$1 and expired <> true", client, [token])
+
   let resultat = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.user_token = $1 and expired <> true", client, [token])
     await insertIntoDb("insert into saves (user_id, json_data) values($1,$2)", client, [resultat[0].id, json]);
   await client.release();
@@ -121,7 +121,7 @@ server.post("/save/fetch", async (req, res)=>{
   let data = req.body
   let {token} = data
   let resultat;
-  let expiration = await selectIntoDb("select expired from token_users where user_token=$1 and expired <> true", client, [token])
+
   let token_result = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.user_token = $1 and expired <> true", client,[token])
     resultat = await selectIntoDb("select json_data from saves s join users u on s.user_id = u.id  where s.user_id = $1",
      client,
@@ -130,6 +130,13 @@ server.post("/save/fetch", async (req, res)=>{
   await client.release();
   res.send(resultat)
 
+})
+
+server.get("/leaderboard", async (req, res)=>{
+  const client = await pool.connect();
+  let resultat = await selectIntoDb("select sc.score, u.email from scores sc join users u on u.id  = sc.user_id   order by score desc", client, [])
+  await client.release();
+  res.send(resultat);
 })
 
 server.get("/endtoken/:token", async (req, res)=>{
