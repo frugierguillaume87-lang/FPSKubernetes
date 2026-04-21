@@ -70,10 +70,10 @@ server.post("/score",async (req, res)=>{
     let data = req.body
     console.log(data)
     let resultat;
-    let {token, score, wave} = data
-    console.log(token+" "+score+" "+wave)
-    try {
+    let {token, nombre_kill, duree, wave} = data
 
+    try {
+      let score = nombre_kill * duree * wave
       resultat = await selectIntoDb("select u.id from users u join token_users tk on u.id = tk.user_id where tk.user_token = $1 and tk.expired <> true", client, [token])
       await insertIntoDb("insert into scores(user_id,score,wave_reached,created_at) values ($1, $2, $3, $4)", client,[resultat[0].id, score, wave, new Date()]) 
           
