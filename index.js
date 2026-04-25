@@ -46,13 +46,23 @@ server.post("/login", async (req, res) => {
     const client = await pool.connect();
     let data = req.body
     let resultat;
-    let {email, password} = data
+    let {email, password, token} = data
     let utilisateur = await selectIntoDb("SELECT * FROM users WHERE email=$1", client, [email])
     let hash = utilisateur[0].password
     if (bcrypt.compareSync(password, hash) ){
       let token = creationToken()
-      await insertIntoDb("insert into token_users(user_token, expired, user_id) values ($1,$2,$3)", client, [token, false, utilisateur[0].id]);
-      resultat = await selectIntoDb("SELECT user_token FROM token_users WHERE user_id=$1 and expired<>true", client, [utilisateur[0].id])  
+      if (token == null){
+        await insertIntoDb("insert into token_users(user_token, expired, user_id) values ($1,$2,$3)", client, [token, false, utilisateur[0].id]);
+        resultat = await selectIntoDb("SELECT user_token FROM token_users WHERE user_id=$1 and expired<>true", client, [utilisateur[0].id])          
+      }else{
+        let tokentemp =  await selectIntoDb("SELECT user_token FROM token_users WHERE user_id=$1 and expired<>true and user_token=$2", client, [utilisateur[0].id, token])
+        if (tokentemp[0].expired == false){
+          await insertIntoDb("update token_users set expired=true where user_id = $1", client,[token_result[0].id])
+        }
+        await insertIntoDb("insert into token_users(user_token, expired, user_id) values ($1,$2,$3)", client, [token, false, utilisateur[0].id]);
+        resultat = await selectIntoDb("SELECT user_token FROM token_users WHERE user_id=$1 and expired<>true", client, [utilisateur[0].id])  
+        
+      }
       res.status(201)
 
       await client.release();
