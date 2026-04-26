@@ -56,12 +56,20 @@ server.post("/login", async (req, res) => {
         resultat = await selectIntoDb("SELECT user_token FROM token_users WHERE user_id=$1 and expired<>true", client, [utilisateur[0].id])          
       }else{
         let tokentemp =  await selectIntoDb("SELECT user_token FROM token_users WHERE user_id=$1 and expired<>true and user_token=$2", client, [utilisateur[0].id, token])
-        if (tokentemp[0].expired == false){
-          await insertIntoDb("update token_users set expired=true where user_id = $1", client,[token_result[0].id])
-        }
-        await insertIntoDb("insert into token_users(user_token, expired, user_id) values ($1,$2,$3)", client, [token, false, utilisateur[0].id]);
-        resultat = await selectIntoDb("SELECT user_token FROM token_users WHERE user_id=$1 and expired<>true", client, [utilisateur[0].id])  
         
+        await insertIntoDb(
+          "DELETE FROM token_users WHERE user_id=$1", 
+          client, 
+          [utilisateur[0].id]
+        );
+
+        await insertIntoDb(
+          "insert into token_users(user_token, expired, user_id) values ($1,$2,$3)", 
+          client, 
+          [token, false, utilisateur[0].id]
+        );
+        resultat = await selectIntoDb("SELECT user_token FROM token_users WHERE user_id=$1 and expired<>true", client, [utilisateur[0].id])
+ 
       }
       res.status(201)
 
